@@ -56,7 +56,7 @@ for t = 1:T,
 
     if( mod(t,5)==0 )
         fwrite(fid,int32(L),'int32');
-        if(0)
+        if(nargout==0)
             imagesc(L);
             pause(0.5); 
         end
