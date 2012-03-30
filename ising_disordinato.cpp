@@ -198,10 +198,10 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
 		//J gaussiano (positivo)
         prob[i] = exp(-2 * beta * generatore.semi_norm());
         //J uniforme [0,1] (positivo)
-		prob[i] = exp(-2 * beta * generatore.rand());
+		//prob[i] = exp(-2 * beta * generatore.rand());
         prob[i] /= (1 + prob[i]);
         // J solo positivi
-		J[i] = 1; //2 * (generatore() > .5) - 1;
+		J[i] = 2 * (generatore() > .5) - 1;
     }
         
     for (int i = 0; i < runs; i++) {

@@ -1,4 +1,4 @@
-COPTS= -O3 -Wall 
+COPTS= -O3 -Wall -DRIDUZIONE
 files=*.cpp *.h Makefile2
 
 ising: ising_disordinato.o distanze.o partizioni.o init_functions.o rand55.o
