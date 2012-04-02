@@ -205,8 +205,14 @@ void set_program_options(options &opts, int argc, char**argv) {
     srand(opts.seed);
     
     if(opts.from & LATTICE){
+        printf("chose lattice\n");
         opts.seq_len = opts.lato * opts.lato;
-        opts.da_calcolare &= ~(SHAN | SHAN_TOP | RID | RID_TOP);
+        opts.da_calcolare =   GENERAL 
+          //              | GENERAL_RID 
+                ;
+    }
+    if(opts.from & SEQUENCE){
+      opts.da_calcolare =   SHAN  | RID     ;
     }
     
     fprintf(stderr,"\n");

@@ -51,7 +51,7 @@ void linear_partition::fill(const T* seq, int len) {
         }
     //number of atoms found - index++ of last the atom in the array (zero addressing)
     n = j;
-    entropia_topologica=mylog[n];
+   entropia_topologica=mylog[n];
     entropia_shannon=entropy_binary_partition(binary,N);
 }
 template void linear_partition::fill(const char *, int);
@@ -324,6 +324,7 @@ void general_partition::from_square_lattice(const T *reticolo, int lato,int){
     entropia_shannon= -entropia_shannon/N+mylog[N];
           
 }
+template void general_partition::from_square_lattice(const int*, int, int);
 
 
 

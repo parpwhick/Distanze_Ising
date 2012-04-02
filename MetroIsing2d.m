@@ -1,4 +1,4 @@
-function [L] = MetroIsing2d(N,bt,T,L0)
+function [L,p] = MetroIsing2d(N,bt,T,L0)
 %function rho = MetroIsing2d(N,bt,T,L0)
 
 
@@ -6,7 +6,7 @@ function [L] = MetroIsing2d(N,bt,T,L0)
 %     cicle=30;
 % end
     
-p=0.5;
+
 nomefile=sprintf('ising_%d.bin',N);
 fid=fopen(nomefile,'w');
 
@@ -29,7 +29,8 @@ dispari=find(mod(elenco,2));
 pari=find(~mod(elenco,2));
 beta=bt;
 
-for t = 0:T,
+p=zeros(1,T);
+for t = 1:T,
 %    beta=bt+0.4*sin(2*pi/200*t);
     exp_beta=exp(-beta*[-8 -4 0 4 8]');
 
@@ -48,26 +49,26 @@ for t = 0:T,
     accettati= (rand(1,length(j))'<exp_beta(dH/4+3));
     accettati=j(accettati>0);
     L(accettati) = - L(accettati);
-
+    
     j=dispari;
     dH = 2*L(j).*(L(nnr(j))+L(nnl(j))+L(nnu(j))+L(nnd(j)));
     accettati= (rand(1,length(j))'<exp_beta(dH/4+3));
     accettati=j(accettati>0);
     L(accettati) = - L(accettati);
-
+    
     if( t>3 )
         fwrite(fid,int32(L),'int32');
         if(nargout==0)
             imagesc(L);
-            pause(0.5); 
+            pause(0.5);
         end
     end
-
-rho=sum(L(:));
-
-p=(1-abs(rho)/N^2)/2;
-
-disp(['beta=' num2str(beta) ', p=' num2str(p)]);
-
+    
+    rho=sum(L(:));    
+    p(t)=(1-abs(rho)/N^2)/2;
+    
+    
 end;
+
+end
 
