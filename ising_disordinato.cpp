@@ -17,42 +17,44 @@
 extern options opts;
 double *mylog;
 
-void print_array(int *array, int len, char *nome) {
+void print_array(const int *array, int len, const char *nome) {
     printf("%s {%d", nome, array[0]);
     for (int i = 1; i < len; i++)
         printf(",%d", array[i]);
     printf("}\n\n");
 }
 
-int *colore=0;
+int *colore = 0;
 
 #define COL_MAX 1000
+
 template <typename T>
 void ppmout(const T *grid1, int sz, const char *filename) {
 
-    if(colore==0){
+    if (colore == 0) {
         colore = new int[COL_MAX];
         for (int i = 0; i < COL_MAX; i++) {
             colore[i] = xrand();
         }
         colore[0] = 0x0F5A3A1F; // blue almost black
     }
-    
+
     int MULT;
-    if(sz > 500)
-        MULT=1;
+    if (sz > 500)
+        MULT = 1;
     else
-        MULT=500/sz + 1;
-    
-    
-    FILE *fout = fopen(filename,"w");
-    fprintf(fout, "P6\n %d %d\n 255\n", MULT*sz, MULT*sz);
+        MULT = 500 / sz + 1;
+
+
+    FILE *fout = fopen(filename, "w");
+    fprintf(fout, "P6\n %d %d\n 255\n", MULT*sz, MULT * sz);
 
 
     for (int rg = 0; rg < sz; rg++) {
         for (int i = 0; i < MULT; i++)
             for (int cl = 0; cl < sz; cl++) {
-                int sito=grid1[rg * sz + cl] % COL_MAX;
+                int sito = (grid1[rg * sz + cl] + 20) % COL_MAX;
+                sito *= 2;
                 int color = colore[sito];
                 for (int j = 0; j < MULT; j++)
                     fwrite(&color, 3, 1, fout);
@@ -61,16 +63,17 @@ void ppmout(const T *grid1, int sz, const char *filename) {
 }
 
 
-int *nnl=0, 
-        *nnu=0, 
-        *nnd=0, 
-        *nnr=0;
+int *nnl = 0,
+        *nnu = 0,
+        *nnd = 0,
+        *nnr = 0;
 
 #define up(i) (i - (i % lato)+ ((i+lato-1)%lato))
 #define down(i) ((i/lato)*lato + ((i+lato+1)%lato))
 #define left(i) (i+N-lato)%N
 #define right(i) (i+N+lato)%N
-void ising_lattice(options opts, int *buffer_sequenze, rand55 &generatore) {
+
+void ising_lattice(options opts, rand55 &generatore, general_partition *partitions) {
     int N = opts.seq_len;
     int lato = opts.lato;
     int runs = opts.n_seq;
@@ -86,83 +89,90 @@ void ising_lattice(options opts, int *buffer_sequenze, rand55 &generatore) {
     //int entry_count=0;
 
     //inizializzazione array primi vicini
-    if (nnl == 0){
+    if (nnl == 0)
+#pragma omp critical
+    {
+        nnl = new int[N];
+        nnr = new int[N];
+        nnu = new int[N];
+        nnd = new int[N];
         for (int i = 0; i < opts.seq_len; i++) {
             nnl[i] = left(i);
             nnr[i] = right(i);
             nnu[i] = up(i);
             nnd[i] = down(i);
+
         }
+   }
+    
+
+
+
+    if (beta < 0.4)
+        prob = 0.5;
+    else {
+        //genero in base al fit quadratico della probabilita da un esperimento
+        prob = log(beta);
+        prob = 2.14 - 5.63 * prob - 7.71 * prob*prob;
+        prob = exp(prob);
     }
 
 
-    
-    if(beta<0.4)
-       prob=0.5;    
-    else{
-        //genero in base al fit quadratico della probabilita da un esperimento
-        prob=log(beta);
-        prob=2.14 - 5.63 * prob - 7.71*prob*prob;
-        prob=exp(prob);
-    }      
     for (int i = 0; i < N; i++) {
         chain[i] = 2 * (generatore() > prob) - 1;
     }
+    //print_array(chain,50,"chain");
 
-    if(beta<0.4 || beta>0.5)
-        metodo=1;
-    else
-        metodo=1;
-    
+    int flips = 2;
+    if (beta < 0.36 || beta > 0.47)
+        metodo = 1;
+    else{
+        metodo = 1;
+		flips=10;
+	}
+
     /* METODO 1, funziona ok per beta<2, termalizza troppo lento dopo
      * aggiornamento di un sito per volta preso a random 
      */
+
+
     for (i = -2; i < runs; i++) {
 
         /* METODO 1
          * single spin flip
          */
         if (metodo == 1) {
-            int flips = N;
 
             for (int k = 0; k < flips; k++) {
 
                 for (int j = 0; j < N; j += 2) {
                     dH = 2 * chain[j]*(chain[nnl[j]] + chain[nnr[j]] + chain[nnu[j]] + chain[nnd[j]]);
                     if (dH < 0 || generatore() < exp(-beta * dH))
-                        chain[j] *= -1;
+                        chain[j] = -chain[j];
                 }
                 for (int j = 1; j < N; j += 2) {
                     dH = 2 * chain[j]*(chain[nnl[j]] + chain[nnr[j]] + chain[nnu[j]] + chain[nnd[j]]);
                     if (dH < 0 || generatore() < exp(-beta * dH))
-                        chain[j] *= -1;
+                        chain[j] = -chain[j];
                 }
 
             }
-        }   /* METODO 2
-             * Wolf / Swendsen-Wang
-             */
-        else if (metodo == 2) {
-            //TODO: implementa!
         }
 
-        if(i<0)
+        if (i < 0)
             continue;
-        //messa in buffer e calcolo medie
-        sprintf(filename,"reticolo%03d.ppm",i);
-        ppmout(chain,lato,filename);
-      
-        for (int k = 0; k < opts.seq_len; k++) {
-            buffer_sequenze[i * opts.seq_len + k] = chain[k];
-            // printf("%c", chain[k] == 1 ? '+' : '-');
-        }
+        partitions[i].from_square_lattice(chain, lato, 2);
+
+
     }
-    
+
+
     delete[]chain;
 
 }
 
 // J = normale(media=0,std=1)
+
 void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore) {
     int L = opts.seq_len;
     int runs = opts.n_seq;
@@ -170,34 +180,34 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
 
     int *flipchain = new int [L];
     int *chain = new int[L];
-    int *J = new int[L];     
+    int *J = new int[L];
     double *prob = new double[L];
-          
-    for (int i = 0; i < L; i++){
+
+    for (int i = 0; i < L; i++) {
         //probabilita di trovare un flip, ovvero -1
-	//J gaussiano (positivo)
+        //J gaussiano (positivo)
         prob[i] = exp(-2 * beta * generatore.semi_norm());
         //J uniforme [0,1] (positivo)
-	//prob[i] = exp(-2 * beta * generatore.rand());
+        //prob[i] = exp(-2 * beta * generatore.rand());
         prob[i] /= (1 + prob[i]);
-        
+
         // J  +- 1
-	J[i] = 2 * (generatore() > .5) - 1;
+        J[i] = 2 * (generatore() > .5) - 1;
         // J positivi
         //J[i] = 1;
     }
-        
+
     for (int i = 0; i < runs; i++) {
         chain[0] = 2 * (generatore() > .5) - 1;
-        
+
         for (int k = 0; k < L; k++)
-            flipchain[k] = (prob[k]  >  generatore() ) ? -1 : 1;
-        
-        for (int k = 1; k < L; k++) 
-            chain[k] = flipchain[k] * chain[k-1] * J[k];
-        
-        for (int k = 0; k < L; k++) {            
-            buffer_sequenze[i * L + k] = chain[k] ;
+            flipchain[k] = (prob[k] > generatore()) ? -1 : 1;
+
+        for (int k = 1; k < L; k++)
+            chain[k] = flipchain[k] * chain[k - 1] * J[k];
+
+        for (int k = 0; k < L; k++) {
+            buffer_sequenze[i * L + k] = chain[k];
         }
     }
 
@@ -207,7 +217,7 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
 }
 
 int main(int argc, char** argv) {
-   
+
 
     FILE *out;
 
@@ -215,12 +225,13 @@ int main(int argc, char** argv) {
 
     //random number initialization
     out = fopen("/dev/urandom", "r");
-    int bytes_read=fread(&opts.seed, sizeof (unsigned int), 1, out);
-    if(!bytes_read)
+    int bytes_read = fread(&opts.seed, sizeof (unsigned int), 1, out);
+    if (!bytes_read)
         printf("Can't initialize random number generation\n");
     fclose(out);
     //fprintf(stderr,"Seed initialized to %d\n",opts.seed);
     srand(opts.seed);
+    xrandinit(opts.seed);
 
     //logarithm lookup table, 6x program speedup
     mylog = new double[3 * opts.seq_len + 10];
@@ -230,7 +241,7 @@ int main(int argc, char** argv) {
 
     double media_globale = 0;
     double media_globale_n2 = 0;
-    int n_estrazioni = 50;
+    int n_estrazioni = 10;
     int runs = 0;
 
 
@@ -285,28 +296,24 @@ int main(int argc, char** argv) {
 
     // <editor-fold defaultstate="collapsed" desc="Reticoli bidimensionali">
     if (opts.from & LATTICE) {
-#pragma omp parallel
+        std::clock_t start = std::clock();
+        double time_diff;
+        double completed_ratio;
+#pragma omp parallel num_threads(opts.threads)
         {
             general_partition *partitions = new general_partition[opts.n_seq];
-            int *buf_sequenze = new int[opts.n_seq * opts.seq_len];
             distance d(opts.seq_len);
             rand55 generatore;
 
-            std::clock_t start = std::clock();
-            double time_diff;
-            double completed_ratio;
+
             for (int L = 0; L < n_estrazioni; L++) {
                 // Generazione di un nuovo vettore J_ij random
                 // e di opts.n_seq sequenze che hanno quel J 
 
                 double media_locale = 0;
                 double media_locale_n2 = 0;
-                ising_lattice(opts, buf_sequenze, generatore);
 
-                //riempi le partizioni, a partire dalle sequenze date
-                for (int i = 0; i < opts.n_seq; i++)
-                    partitions[i].from_square_lattice(&buf_sequenze[i * opts.seq_len], opts.lato, 2);
-
+                ising_lattice(opts, generatore, partitions);
 
                 //media delle distanze tra le coppie di sequenze generate
                 //#pragma omp parallel for firstprivate(d) schedule(dynamic,10) reduction(+: media_n, media_n2)
@@ -341,21 +348,27 @@ int main(int argc, char** argv) {
                 fflush(stderr);
 
             }
-            time_diff = (std::clock() - start) / (double) CLOCKS_PER_SEC;
-            fprintf(stderr, "\r100%% done in %.1f seconds of CPU time\n", time_diff);
         }
+        time_diff = (std::clock() - start) / (double) CLOCKS_PER_SEC;
+        fprintf(stderr, "\r100%% done in %.1f seconds of CPU time\n", time_diff);
+
 
     }// </editor-fold>
-    
-    
+
+
     double varianza_n;
     int Nd = runs * (opts.n_seq * (opts.n_seq - 1)) / 2;
     media_globale /= Nd;
     media_globale_n2 /= Nd;
 
     varianza_n = media_globale_n2 - media_globale*media_globale;
-    printf("%d %f %f\n", opts.seq_len, media_globale, varianza_n);
-    fprintf(stderr, "%d %f %f\n", opts.seq_len, media_globale, varianza_n);
+	int lunghezza;
+	if(opts.from & LATTICE)
+		lunghezza=opts.lato;
+	else
+		lunghezza=opts.seq_len;
+    printf("%d %f %f\n", lunghezza, media_globale, varianza_n);
+    //fprintf(stderr, "%d %f %f\n", opts.seq_len, media_globale, varianza_n);
 
 
     return 0;

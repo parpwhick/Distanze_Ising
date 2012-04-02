@@ -61,8 +61,11 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}"  -seqnum 3000 -seqlength 1000 -beta 3</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}"  -seqnum 20 -seqlength 50 -beta 5.0</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}"  -seqnum 10 -seqlength 10 -beta 2.0</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"  -seqnum 100 -lattice -lato 50 -beta 0.2</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"  -seqnum 10 -lattice -lato 200 -beta 0.2</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"  -seqnum 10 -lattice -lato 200 -beta 0.2 -threads 1</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}"  -seqnum 10 -seqlength 10 -beta 2.0</runcommand>
+        <runcommand>"${OUTPUT_PATH}"  -seqnum 10 -lattice -lato 200 -beta 0.2 -threads 1</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <console-type>1</console-type>

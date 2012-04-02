@@ -39,6 +39,7 @@
       <in>init_functions.cpp</in>
       <in>ising1d.m</in>
       <in>ising_disordinato.cpp</in>
+      <in>p_ottimale.m</in>
       <in>partizioni.cpp</in>
       <in>rand55.cpp</in>
       <in>rand55.h</in>
@@ -87,17 +88,11 @@
           <ccTool>
             <preprocessorList>
               <Elem>RIDUZIONE</Elem>
+              <Elem>_OPENMP=200505</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
       </makefileType>
-      <item path="ising_disordinato.cpp" ex="false" tool="1" flavor="0">
-        <ccTool>
-          <preprocessorList>
-            <Elem>_OPENMP=200505</Elem>
-          </preprocessorList>
-        </ccTool>
-      </item>
     </conf>
   </confs>
 </configurationDescriptor>

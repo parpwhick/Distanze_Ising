@@ -75,7 +75,7 @@ void set_program_options(options &opts, int argc, char**argv) {
         do {
             input = argv[read_argvs++];
             if (input == "-random") {
-                fprintf(stderr, "Specifying random sequence generation\n");
+                //fprintf(stderr, "Specifying random sequence generation\n");
                 opts.from |= RANDOM;
                 opts.from &= ~FROM_FILE;
             } else if (input == "-file") {
@@ -85,15 +85,15 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
                 
                 strncpy(opts.filename, argv[read_argvs++], 255);
-                fprintf(stderr, "Reading from filename: %s\n", opts.filename);
+                //fprintf(stderr, "Reading from filename: %s\n", opts.filename);
                 opts.from &= ~RANDOM;
                 opts.from |= FROM_FILE;
             } else if (input == "-lattice") {
-                fprintf(stderr, "Analysing 2d lattice\n");
+                //fprintf(stderr, "Analysing 2d lattice\n");
                 opts.from |= LATTICE;
                 opts.from &= ~SEQUENCE;
             } else if (input == "-sequence") {
-                fprintf(stderr, "Analysing 1d sequences\n");
+                //fprintf(stderr, "Analysing 1d sequences\n");
                 opts.from &= ~LATTICE;
                 opts.from |= SEQUENCE;
             } else if (input == "-seqlength") {
@@ -103,7 +103,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
                 
                 opts.seq_len = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Sequence length limited to %d\n", opts.seq_len);
+                //fprintf(stderr, "Sequence length limited to %d\n", opts.seq_len);
             } else if (input == "-lato") {
                 if (argc - read_argvs < 1)
                     error("Need to specify lattice side length\n");
@@ -111,7 +111,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
                 
                 opts.lato = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Lattice side set to %d\n", opts.lato);
+                //fprintf(stderr, "Lattice side set to %d\n", opts.lato);
             } 
             else if (input == "-seqnum") {
                 if (argc - read_argvs < 1)
@@ -120,7 +120,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
 
                 opts.n_seq = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Number of sequences limited to: %d\n", opts.n_seq);
+                //fprintf(stderr, "Number of sequences limited to: %d\n", opts.n_seq);
             }else if (input == "-fuzzy") {
                 if (argc - read_argvs < 1)
                     error("Missing number of partitioning fuzziness\n");
@@ -128,32 +128,32 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
 
                 opts.fuzzy = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Fuzziness degree set to: %d\n", opts.fuzzy);
+                //fprintf(stderr, "Fuzziness degree set to: %d\n", opts.fuzzy);
             } else if (input == "-v") {
                 opts.verbose++;
-                fprintf(stderr, "Verbosity at %d\n", opts.verbose);
+                //fprintf(stderr, "Verbosity at %d\n", opts.verbose);
             }  else if (input == "-graphics") {
                 opts.graphics = true;
-                fprintf(stderr, "Making pretty lattice graphs\n");
+                //fprintf(stderr, "Making pretty lattice graphs\n");
             }         
             else if (input == "-translate") {
                 opts.translate = true;
-                fprintf(stderr, "Simplifying sequence alphabet\n");
+                //fprintf(stderr, "Simplifying sequence alphabet\n");
             } else if (input == "-sorted") {
                 opts.alg=SORTED;
-                fprintf(stderr, "Using sorted algorithm\n");
+                //fprintf(stderr, "Using sorted algorithm\n");
             } else if (input == "-pmatrix") {
                 opts.alg=PMATRIX;
-                fprintf(stderr, "Using pmatrix algorithm\n");
+                //fprintf(stderr, "Using pmatrix algorithm\n");
             } else if (input == "-standard") {
                 opts.alg=NORMAL;
-                fprintf(stderr, "Using standard algorithm\n");
+                //fprintf(stderr, "Using standard algorithm\n");
             } else if (input == "-write") {
                 opts.write = true;
-                fprintf(stderr, "Writing out the distance matrices\n");
+                //fprintf(stderr, "Writing out the distance matrices\n");
             } else if (input == "-nodistance") {
                 opts.distance = false;
-                fprintf(stderr, "Not calculating the distance matrix\n");
+                //fprintf(stderr, "Not calculating the distance matrix\n");
             } else if (input == "-symbols") {
                 if (argc - read_argvs < 1)
                     error("Missing max number of random letters to use\n");
@@ -161,7 +161,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
                 
                 opts.n_symbols = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Number of letters limited to: %d\n", opts.n_symbols);
+                //fprintf(stderr, "Number of letters limited to: %d\n", opts.n_symbols);
             } else if (input == "-beta") {
                 if (argc - read_argvs < 1)
                     error("Missing BETA!!!\n");
@@ -176,7 +176,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
 
                 opts.seed = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Seed set to: %d\n", opts.seed);
+                //fprintf(stderr, "Seed set to: %d\n", opts.seed);
             } else if (input == "-threads") {
                 if (argc - read_argvs < 1)
                     error("Expecting thread number\n");                            
@@ -184,7 +184,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
 
                 opts.threads = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Threads limited to: %d\n", opts.threads);
+                //fprintf(stderr, "Threads limited to: %d\n", opts.threads);
             } else if (input == "-h" || input == "-help" || input == "--help") {
                 print_help();
                 killswitch=1;
@@ -205,7 +205,6 @@ void set_program_options(options &opts, int argc, char**argv) {
     srand(opts.seed);
     
     if(opts.from & LATTICE){
-        printf("chose lattice\n");
         opts.seq_len = opts.lato * opts.lato;
         opts.da_calcolare =   GENERAL 
           //              | GENERAL_RID 

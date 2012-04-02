@@ -71,8 +71,10 @@ void general_partition::allocate(int len){
     assert(len !=0);
     N=len;
     
-    if (!labels)
+    if (!labels){
         labels = new int[N];
+		
+	}
     if (!prev_site)
         prev_site = new int[N];
 //    if (!atomi)
@@ -99,7 +101,7 @@ general_partition::~general_partition(){
     if (N) {
         delete []labels;
         delete []prev_site;
-        delete []atomi;
+        //delete []atomi;
     }    
     if(NNB)
         delete []NNB;
@@ -267,8 +269,8 @@ int findroot(int i,int *ptr)
 }
 
 
-#define nnu (i - (i % lato)+ ((i+lato-1)%lato))
-#define nnl (i+N-lato)%N
+#define nnu (s1 - (s1 % lato)+ ((s1+lato-1)%lato))
+#define nnl (s1+N-lato)%N
 
 template <typename T> 
 void general_partition::from_square_lattice(const T *reticolo, int lato,int){
@@ -292,8 +294,8 @@ void general_partition::from_square_lattice(const T *reticolo, int lato,int){
         int r1=findroot(s1,labels);
 
         
-        neighbors[0] = (reticolo[i] == reticolo[nnu]) ? nnu : i;
-        neighbors[1] = (reticolo[i] == reticolo[nnl]) ? nnl : i;
+        neighbors[0] = (reticolo[s1] == reticolo[nnu]) ? nnu : s1;
+        neighbors[1] = (reticolo[s1] == reticolo[nnl]) ? nnl : s1;
         for (int j = 0; j < dim; j++) {
             s2 = neighbors[j];        
             if (s1 == s2 || s2 < 0)
@@ -317,9 +319,16 @@ void general_partition::from_square_lattice(const T *reticolo, int lato,int){
     for(i=0;i<N;i++){
         if(labels[i]<0){
             entropia_shannon+= -labels[i]*mylog[-labels[i]];
-           n++;
+            prev_site[i]=i;
+            n++;
+        } else{
+            prev_site[i]=findroot(i,labels);
         }
     }
+    std::swap(labels,prev_site);
+    
+    
+    
     entropia_topologica=mylog[n];
     entropia_shannon= -entropia_shannon/N+mylog[N];
           

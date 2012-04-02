@@ -22,6 +22,13 @@ double rand55::rand() {
     return ((double) n1->Y * Norm_Factor);
 }
 
+unsigned long rand55::rand_long(){
+    n1 = n1->next;
+    n2 = n2->next;
+    n1->Y += n2->Y;
+    return (n1->Y );
+}
+
 //generatore di numeri gaussiani positivi
 double rand55::semi_norm() {
     if (have_next_normal) {

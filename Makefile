@@ -1,4 +1,8 @@
-COPTS= -O3 -Wall -DRIDUZIONE
+COPTS = -Wall -fopenmp
+COPTS += -DRIDUZIONE
+#COPTS += -g 
+COPTS += -O3
+
 files=*.cpp *.h Makefile2
 
 ising: ising_disordinato.o distanze.o partizioni.o init_functions.o rand55.o
@@ -8,10 +12,10 @@ rand55.o: rand55.cpp rand55.h
 	g++ ${COPTS} -c rand55.cpp
 
 ising_disordinato.o: ising_disordinato.cpp strutture.h
-	g++ ${COPTS} -fopenmp -c ising_disordinato.cpp
+	g++ ${COPTS} -c ising_disordinato.cpp
 
 main.o: main.cpp strutture.h 
-	g++ ${COPTS} -fopenmp -c main.cpp
+	g++ ${COPTS} -c main.cpp
 
 translation.o: strutture.h translation.cpp
 	g++ ${COPTS} -c translation.cpp

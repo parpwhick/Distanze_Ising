@@ -18,6 +18,7 @@ class rand55 {
 public:
     double rand() ;
     double semi_norm() ;
+    unsigned long rand_long();
     
     rand55(long idum=-1) { rand_init(idum); have_next_normal=0;}
     ~rand55() { delete[]Ran;}
