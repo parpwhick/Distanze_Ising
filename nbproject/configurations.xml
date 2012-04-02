@@ -4,6 +4,7 @@
     <df name="ising" root=".">
       <df name="disordinato_gaussiano">
         <in>carica_tutto_in_matlab.m</in>
+        <in>fitta_andamento.m</in>
       </df>
       <df name="disordinato_nonridotto">
         <in>carica_tutto_in_matlab.m</in>
@@ -11,22 +12,33 @@
       <df name="disordinato_ridotto">
         <in>carica_tutto_in_matlab.m</in>
       </df>
+      <df name="gaussiano_nonridotto">
+        <in>carica_tutto_in_matlab.m</in>
+        <in>fitta_andamento.m</in>
+      </df>
+      <df name="gaussiano_ridotto">
+        <in>carica_tutto_in_matlab.m</in>
+        <in>fitta_andamento.m</in>
+      </df>
+      <df name="immagini">
+      </df>
       <df name="ising_ordinato">
       </df>
-      <df name="ordinato_gaussiano">
+      <df name="uniforme_nonridotto">
         <in>carica_tutto_in_matlab.m</in>
+        <in>fitta_andamento.m</in>
       </df>
-      <df name="ordinato_uniforme">
-        <in>carica_tutto_in_matlab.m</in>
+      <df name="utility">
+        <in>carica_in_matlab.m</in>
+        <in>disegna_griglia_bond.m</in>
+        <in>fitta_andamento.m</in>
+        <in>ising_carica.m</in>
       </df>
       <in>MetroIsing2d.m</in>
       <in>distanze.cpp</in>
-      <in>fitta_andamento.m</in>
       <in>init_functions.cpp</in>
       <in>ising1d.m</in>
-      <in>ising_carica.m</in>
       <in>ising_disordinato.cpp</in>
-      <in>main.cpp</in>
       <in>partizioni.cpp</in>
       <in>rand55.cpp</in>
       <in>rand55.h</in>
@@ -74,11 +86,18 @@
           <executablePath>ising</executablePath>
           <ccTool>
             <preprocessorList>
-              <Elem>_OPENMP=200505</Elem>
+              <Elem>RIDUZIONE</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
       </makefileType>
+      <item path="ising_disordinato.cpp" ex="false" tool="1" flavor="0">
+        <ccTool>
+          <preprocessorList>
+            <Elem>_OPENMP=200505</Elem>
+          </preprocessorList>
+        </ccTool>
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>

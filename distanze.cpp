@@ -10,11 +10,13 @@ extern options opts;
 extern double *mylog;
 
 void distance::allocate(int n) {
-    common_factor = new int[n];
-    reduced1 = new int[n];
-    reduced2 = new int[n];
-    product = new int[n];
-    product_reduced = new int[n];
+    if (opts.da_calcolare & (SHAN | RID)) {
+        common_factor = new int[n];
+        reduced1 = new int[n];
+        reduced2 = new int[n];
+        product_reduced = new int[n];
+    }
+    product = new u_int64_t[n];
 }
 
 distance::distance(int n) {
@@ -29,13 +31,19 @@ distance::distance(const distance &d1) {
 
 distance::~distance() {
     if (N) {
-        delete[] common_factor;
-        delete[] reduced1;
-        delete[] reduced2;
+        if (opts.da_calcolare & (SHAN | RID)) {
+            delete[] common_factor;
+            delete[] reduced1;
+            delete[] reduced2;
+            delete[] product_reduced;
+        }
         delete[] product;
-        delete[] product_reduced;
     }
     N = 0;
+}
+
+void distance::fill(const linear_partition& e1, const linear_partition& e2) {
+    this->binary_partition(e1, e2);
 }
 
 void print_binary_partition(int*p, int N) {
@@ -45,7 +53,7 @@ void print_binary_partition(int*p, int N) {
     printf("\n");
 }
 
-double entropy_binary_partition(int *p, int n) {
+double entropy_binary_partition(const int *p, int n) {
     //p: binary partition
     //n: total length
     int i = 0;
@@ -78,7 +86,7 @@ double entropy_binary_partition(int *p, int n) {
 //function giving the distance between 2 partitions, by intersecting 
 //and calculating the relevant entropy
 
-void distance::binary_partition(const partition &first, const partition &second) {
+void distance::binary_partition(const linear_partition &first, const linear_partition &second) {
 
     int N = first.N;
 
@@ -128,3 +136,88 @@ void distance::binary_partition(const partition &first, const partition &second)
     
 #endif
 }
+
+
+void distance::fill(const general_partition& e1, const general_partition& e2) {
+
+    if (opts.da_calcolare & GENERAL_RID) {
+        partizione_comune.linear_intersection(e1, e2);
+        //partizione_comune.trivial(e1.N);
+        ridotto1.reduce(e1, partizione_comune);
+        ridotto2.reduce(e2, partizione_comune);
+
+     
+        linear_product_sorted(ridotto1,ridotto2);
+        dist_fuzzy_r = dist_fuzzy;
+        dist_fuzzy_r_t = dist_fuzzy_t;
+    }
+
+    if (opts.da_calcolare & GENERAL) {
+        switch (opts.alg) {
+            case PMATRIX:
+            case SORTED:
+            default:
+                linear_product_sorted(e1, e2);
+                break;
+        }
+    }
+}
+
+inline int compare (const void * a, const void * b){
+  return ( *(u_int64_t*)a - *(u_int64_t*)b );
+}
+
+
+void distance::linear_product_sorted(const general_partition &p1,const  general_partition &p2) {
+    int i;
+    int label_count = 0;
+    double H = 0;
+    int mu;
+    int begin;
+
+    for (i = 0; i < N; i++){
+        u_int64_t temp1=p1.labels[i];
+        u_int64_t temp2=p2.labels[i];
+    
+        product[i] = (temp1<<32) | temp2;
+    }
+    
+    
+    qsort(product,N,sizeof(u_int64_t),compare);
+
+    //the first position always starts an atom
+    begin = 0;
+    label_count=1;
+    u_int64_t old_val=product[0];
+    for (i = 1; i < N; i++) {
+        //whenever we find 1 (a new atom)
+        if (product[i]!=old_val) {
+            //a new atom starts
+            label_count++;
+            //the closed (old)atom's length is calculated
+            mu = i - begin;
+            //the new one is ready to go
+            begin = i;
+            //cache the new label to check
+            old_val=product[i];
+            //we add the entropy, with the trick mu>0 and when mu=1 the log is 0
+            if (mu > 1)
+                H += (double) mu * mylog[mu];
+        }
+    }
+    //we check the last one, in case it's left hanging
+    mu = N - begin;
+    H += mu * mylog[mu];
+    
+    //normalize the result
+    H = -H / N + mylog[N];
+
+    double h1 = p1.entropia_shannon,
+            h2 = p2.entropia_shannon;
+            
+    this->dist_fuzzy = 2 * H - h1 - h2;
+    
+
+
+}
+

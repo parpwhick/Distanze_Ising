@@ -43,20 +43,29 @@ void print_help() {
             "  -beta N          Set beta to N\n"
             );
 }
+
 void set_program_options(options &opts, int argc, char**argv) {
-    opts.seq_len = 1000;
-    opts.n_seq = 1000;
+    opts.seq_len = 625;
+    opts.lato = 25;
+    opts.n_seq = 2550;
     opts.n_symbols = 2;
-    opts.from = RANDOM;
+    opts.from = SEQUENCE | RANDOM;
     opts.seed = 37337;
     opts.translate = false;
+    opts.graphics=false;
     opts.verbose = 0;
     opts.write=false;
     opts.distance=true;
     opts.fuzzy=2;
-    opts.threads=1;
+    opts.threads=2;
     opts.alg=AUTO;
     opts.beta=1.0;
+    opts.da_calcolare=   SHAN | SHAN_TOP 
+                        | RID | RID_TOP 
+         //              | GENERAL | GENERAL_TOP 
+          //              | GENERAL_RID | GENERAL_RID_TOP
+                      //| HAMM                        
+            ;
     
     int killswitch=0;
 
@@ -67,7 +76,8 @@ void set_program_options(options &opts, int argc, char**argv) {
             input = argv[read_argvs++];
             if (input == "-random") {
                 fprintf(stderr, "Specifying random sequence generation\n");
-                opts.from = RANDOM;
+                opts.from |= RANDOM;
+                opts.from &= ~FROM_FILE;
             } else if (input == "-file") {
                 if (argc - read_argvs < 1)
                     error("Missing filename to read!\n");
@@ -75,7 +85,17 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
                 
                 strncpy(opts.filename, argv[read_argvs++], 255);
-                opts.from = FILES;
+                fprintf(stderr, "Reading from filename: %s\n", opts.filename);
+                opts.from &= ~RANDOM;
+                opts.from |= FROM_FILE;
+            } else if (input == "-lattice") {
+                fprintf(stderr, "Analysing 2d lattice\n");
+                opts.from |= LATTICE;
+                opts.from &= ~SEQUENCE;
+            } else if (input == "-sequence") {
+                fprintf(stderr, "Analysing 1d sequences\n");
+                opts.from &= ~LATTICE;
+                opts.from |= SEQUENCE;
             } else if (input == "-seqlength") {
                 if (argc - read_argvs < 1)
                     error("Need to specify sequence length\n");
@@ -83,13 +103,24 @@ void set_program_options(options &opts, int argc, char**argv) {
                     error("Expecting argument, not another option\n");
                 
                 opts.seq_len = atoi(argv[read_argvs++]);
-            } else if (input == "-seqnum") {
+                fprintf(stderr, "Sequence length limited to %d\n", opts.seq_len);
+            } else if (input == "-lato") {
+                if (argc - read_argvs < 1)
+                    error("Need to specify lattice side length\n");
+                if (argv[read_argvs][0] == '-')
+                    error("Expecting argument, not another option\n");
+                
+                opts.lato = atoi(argv[read_argvs++]);
+                fprintf(stderr, "Lattice side set to %d\n", opts.lato);
+            } 
+            else if (input == "-seqnum") {
                 if (argc - read_argvs < 1)
                     error("Missing max number of sequences to read\n");
                 if (argv[read_argvs][0] == '-')
                     error("Expecting argument, not another option\n");
 
                 opts.n_seq = atoi(argv[read_argvs++]);
+                fprintf(stderr, "Number of sequences limited to: %d\n", opts.n_seq);
             }else if (input == "-fuzzy") {
                 if (argc - read_argvs < 1)
                     error("Missing number of partitioning fuzziness\n");
@@ -101,7 +132,11 @@ void set_program_options(options &opts, int argc, char**argv) {
             } else if (input == "-v") {
                 opts.verbose++;
                 fprintf(stderr, "Verbosity at %d\n", opts.verbose);
-            } else if (input == "-translate") {
+            }  else if (input == "-graphics") {
+                opts.graphics = true;
+                fprintf(stderr, "Making pretty lattice graphs\n");
+            }         
+            else if (input == "-translate") {
                 opts.translate = true;
                 fprintf(stderr, "Simplifying sequence alphabet\n");
             } else if (input == "-sorted") {
@@ -127,15 +162,14 @@ void set_program_options(options &opts, int argc, char**argv) {
                 
                 opts.n_symbols = atoi(argv[read_argvs++]);
                 fprintf(stderr, "Number of letters limited to: %d\n", opts.n_symbols);
-            }else if (input == "-beta") {
+            } else if (input == "-beta") {
                 if (argc - read_argvs < 1)
                     error("Missing BETA!!!\n");
                 if (argv[read_argvs][0] == '-')
                     error("Expecting argument, not another option\n");
                 
                 opts.beta = atof(argv[read_argvs++]);
-            }
-            else if (input == "-seed") {
+            }else if (input == "-seed") {
                 if (argc - read_argvs < 1)
                     error("Expecting random number generation seed\n");
                 if (argv[read_argvs][0] == '-')
@@ -143,11 +177,18 @@ void set_program_options(options &opts, int argc, char**argv) {
 
                 opts.seed = atoi(argv[read_argvs++]);
                 fprintf(stderr, "Seed set to: %d\n", opts.seed);
+            } else if (input == "-threads") {
+                if (argc - read_argvs < 1)
+                    error("Expecting thread number\n");                            
+                if (argv[read_argvs][0] == '-')
+                    error("Expecting argument, not another option\n");
+
+                opts.threads = atoi(argv[read_argvs++]);
+                fprintf(stderr, "Threads limited to: %d\n", opts.threads);
             } else if (input == "-h" || input == "-help" || input == "--help") {
                 print_help();
                 killswitch=1;
-            }
-            else {
+            }            else {
                 fprintf(stderr, "Unknown option: %s\n", input.c_str());
                 print_help();
                 killswitch=1;
@@ -162,5 +203,12 @@ void set_program_options(options &opts, int argc, char**argv) {
         exit(0);
     
     srand(opts.seed);
+    
+    if(opts.from & LATTICE){
+        opts.seq_len = opts.lato * opts.lato;
+        opts.da_calcolare &= ~(SHAN | SHAN_TOP | RID | RID_TOP);
+    }
+    
+    fprintf(stderr,"\n");
 
 }

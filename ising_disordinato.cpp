@@ -11,7 +11,7 @@
 #include <omp.h>
 //#include <vector>
 #include "strutture.h"
-#include "rand55.h"
+//#include "rand55.h"
 
 extern options opts;
 double *mylog;
@@ -262,7 +262,7 @@ int main(int argc, char** argv) {
     
 #pragma omp parallel
     {
-        partition *partitions = new partition[opts.n_seq];
+        linear_partition *partitions = new linear_partition[opts.n_seq];
         int *buf_sequenze = new int[opts.n_seq * opts.seq_len];
         distance d(opts.seq_len);
         rand55 generatore;
