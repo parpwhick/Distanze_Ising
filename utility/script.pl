@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 
-for($beta=439.03;  $beta<1000;$beta=$beta*1.5){
+for($beta=1;  $beta<100;$beta=$beta*1.5){
 	$beta=sprintf("%.2f",$beta);
 	open dove, ">>beta_$beta";
 	$oldval=0;
@@ -11,7 +11,7 @@ for($beta=439.03;  $beta<1000;$beta=$beta*1.5){
 		open risultato, "./ising -seqnum 100 -seqlength $l -beta $beta|";
 		$valori=<risultato>;
 		@a=split " ",$valori;
-		print  "$beta\n";
+		print  "$beta: $valori";
 		print dove $valori;
 		last if ($a[1]>1.2); # && $a[1]-$oldval < 0.005);
 		$oldval=$a[1];

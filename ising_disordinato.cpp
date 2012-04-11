@@ -80,7 +80,6 @@ void ising_lattice(options opts, rand55 &generatore, general_partition *partitio
     int i = 0;
     double beta = opts.beta;
     int dH;
-    char filename[255];
     int metodo;
     double prob;
 
@@ -184,17 +183,20 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
     double *prob = new double[L];
 
     for (int i = 0; i < L; i++) {
-        //probabilita di trovare un flip, ovvero -1
+        double r;
+		//probabilita di trovare un flip, ovvero -1
         //J gaussiano (positivo)
-        prob[i] = exp(-2 * beta * generatore.semi_norm());
+        //r = generatore.semi_norm();
         //J uniforme [0,1] (positivo)
-        //prob[i] = exp(-2 * beta * generatore.rand());
+		r = generatore.rand()/2+0.25;
+
+        prob[i] = exp(-2 * beta * r);
         prob[i] /= (1 + prob[i]);
 
         // J  +- 1
-        J[i] = 2 * (generatore() > .5) - 1;
+        //J[i] = 2 * (generatore() > .5) - 1;
         // J positivi
-        //J[i] = 1;
+        J[i] = 1;
     }
 
     for (int i = 0; i < runs; i++) {
@@ -241,7 +243,7 @@ int main(int argc, char** argv) {
 
     double media_globale = 0;
     double media_globale_n2 = 0;
-    int n_estrazioni = 10;
+    int n_estrazioni = 50;
     int runs = 0;
 
 
