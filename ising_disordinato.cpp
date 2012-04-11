@@ -188,7 +188,7 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
         //J gaussiano (positivo)
         //r = generatore.semi_norm();
         //J uniforme [0,1] (positivo)
-		r = generatore.rand()/2+0.25;
+		r = generatore.rand()/2 + 0.25;
 
         prob[i] = exp(-2 * beta * r);
         prob[i] /= (1 + prob[i]);
