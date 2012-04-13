@@ -1,11 +1,43 @@
 xy = @(beta) loglog(beta(:,1),beta(:,2),'-');
 i=0;
 
+beta020=load('beta_0.20');
+i=i+1;
+dati(i).beta=0.20;
+dati(i).x=beta020(:,1);
+dati(i).y=beta020(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
+beta035=load('beta_0.35');
+i=i+1;
+dati(i).beta=0.35;
+dati(i).x=beta035(:,1);
+dati(i).y=beta035(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
+beta042=load('beta_0.42');
+i=i+1;
+dati(i).beta=0.42;
+dati(i).x=beta042(:,1);
+dati(i).y=beta042(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
 beta050=load('beta_0.50');
 i=i+1;
 dati(i).beta=0.50;
 dati(i).x=beta050(:,1);
 dati(i).y=beta050(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
+beta060=load('beta_0.60');
+i=i+1;
+dati(i).beta=0.60;
+dati(i).x=beta060(:,1);
+dati(i).y=beta060(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
@@ -17,19 +49,11 @@ dati(i).y=beta100(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
-beta1000=load('beta_10.00');
+beta125=load('beta_1.25');
 i=i+1;
-dati(i).beta=10.00;
-dati(i).x=beta1000(:,1);
-dati(i).y=beta1000(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta1142=load('beta_11.42');
-i=i+1;
-dati(i).beta=11.42;
-dati(i).x=beta1142(:,1);
-dati(i).y=beta1142(:,2);
+dati(i).beta=1.25;
+dati(i).x=beta125(:,1);
+dati(i).y=beta125(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
@@ -41,11 +65,35 @@ dati(i).y=beta150(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
+beta175=load('beta_1.75');
+i=i+1;
+dati(i).beta=1.75;
+dati(i).x=beta175(:,1);
+dati(i).y=beta175(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
+beta180=load('beta_1.80');
+i=i+1;
+dati(i).beta=1.80;
+dati(i).x=beta180(:,1);
+dati(i).y=beta180(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
 beta200=load('beta_2.00');
 i=i+1;
 dati(i).beta=2.00;
 dati(i).x=beta200(:,1);
 dati(i).y=beta200(:,2);
+dati(i).target=0.65;
+dati(i).n=length(dati(i).x);
+
+beta215=load('beta_2.15');
+i=i+1;
+dati(i).beta=2.15;
+dati(i).x=beta215(:,1);
+dati(i).y=beta215(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
@@ -65,91 +113,27 @@ dati(i).y=beta250(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
-beta300=load('beta_3.00');
+beta275=load('beta_2.75');
 i=i+1;
-dati(i).beta=3.00;
-dati(i).x=beta300(:,1);
-dati(i).y=beta300(:,2);
+dati(i).beta=2.75;
+dati(i).x=beta275(:,1);
+dati(i).y=beta275(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
-beta338=load('beta_3.38');
+beta310=load('beta_3.10');
 i=i+1;
-dati(i).beta=3.38;
-dati(i).x=beta338(:,1);
-dati(i).y=beta338(:,2);
+dati(i).beta=3.10;
+dati(i).x=beta310(:,1);
+dati(i).y=beta310(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
-beta350=load('beta_3.50');
+beta340=load('beta_3.40');
 i=i+1;
-dati(i).beta=3.50;
-dati(i).x=beta350(:,1);
-dati(i).y=beta350(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta400=load('beta_4.00');
-i=i+1;
-dati(i).beta=4.00;
-dati(i).x=beta400(:,1);
-dati(i).y=beta400(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta450=load('beta_4.50');
-i=i+1;
-dati(i).beta=4.50;
-dati(i).x=beta450(:,1);
-dati(i).y=beta450(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta500=load('beta_5.00');
-i=i+1;
-dati(i).beta=5.00;
-dati(i).x=beta500(:,1);
-dati(i).y=beta500(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta600=load('beta_6.00');
-i=i+1;
-dati(i).beta=6.00;
-dati(i).x=beta600(:,1);
-dati(i).y=beta600(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta700=load('beta_7.00');
-i=i+1;
-dati(i).beta=7.00;
-dati(i).x=beta700(:,1);
-dati(i).y=beta700(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta761=load('beta_7.61');
-i=i+1;
-dati(i).beta=7.61;
-dati(i).x=beta761(:,1);
-dati(i).y=beta761(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta800=load('beta_8.00');
-i=i+1;
-dati(i).beta=8.00;
-dati(i).x=beta800(:,1);
-dati(i).y=beta800(:,2);
-dati(i).target=0.65;
-dati(i).n=length(dati(i).x);
-
-beta900=load('beta_9.00');
-i=i+1;
-dati(i).beta=9.00;
-dati(i).x=beta900(:,1);
-dati(i).y=beta900(:,2);
+dati(i).beta=3.40;
+dati(i).x=beta340(:,1);
+dati(i).y=beta340(:,2);
 dati(i).target=0.65;
 dati(i).n=length(dati(i).x);
 
@@ -188,7 +172,7 @@ risultato_riscalato = risultato/(risultato(indice)*-log(tanh(beta(indice))));
 semilogy(beta,-1./log(tanh(beta)),beta,risultato_riscalato,'o');
 hold on
 plot(beta(indice),-1/log(tanh(beta(indice))),'s','MarkerSize',7,'MarkerFaceColor','red')
-legend('log tanh \beta','lunghezza di riscalamento')
+legend('1/log(tanh \beta)','lunghezza di riscalamento')
 hold off
 xlabel('\beta');
 

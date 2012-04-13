@@ -186,9 +186,18 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
         double r;
 		//probabilita di trovare un flip, ovvero -1
         //J gaussiano (positivo)
-        //r = generatore.semi_norm();
+        r = generatore.semi_norm();
+        //J uniforme [0.05,0.55] (positivo)
+		//r = generatore.rand()/2 + 0.05;
+        //J uniforme [0.5,1] (positivo)
+		//r = generatore.rand()/2 + 0.5;
+        //J uniforme [1.0,1.5] (positivo)
+		//r = generatore.rand()/2 + 1;
+		//r = generatore.rand() + 1.5;
         //J uniforme [0,1] (positivo)
-		r = generatore.rand()/2 + 0.25;
+		//r = generatore.rand();
+		//J cost
+		//r=1;
 
         prob[i] = exp(-2 * beta * r);
         prob[i] /= (1 + prob[i]);

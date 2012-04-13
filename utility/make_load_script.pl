@@ -42,11 +42,14 @@ figure(2);
 risultato=1:i;
 beta=risultato;
 for j=1:i
-    dati(j).xtarget=fitta_andamento(dati(j));
+dati(j).xtarget=fitta_andamento(dati(j));
 	disp(dati(j).xtarget);
 	risultato(j)=dati(j).xtarget;
 	beta(j)=dati(j).beta;
 end
+
+[beta,p]=sort(beta);
+risultato=risultato(p);
 
 figure(2);
 indice = round(i/2);
@@ -64,6 +67,7 @@ figure(3)
 %for j=2:i
 %    semilogx(dati(j).x/dati(j).xtarget,dati(j).y);
 %end
+
 loglog(beta,risultato,'-o');
 legend('lunghezza di riscalamento')
 xlabel('\\beta');
