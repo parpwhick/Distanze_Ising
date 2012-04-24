@@ -96,7 +96,10 @@ public:
     linear_partition(int len=0){
         n=0;
         N=len;
-        binary=new int[len];
+        if(len)
+			binary=new int[len];
+		else
+			binary=0;
         //atom_positions=new int[len];
     }
     ~linear_partition(){

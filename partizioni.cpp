@@ -31,7 +31,8 @@ void linear_partition::fill(const T* seq, int len) {
     //Total length of the partition is equal to the sequence
     N = len;
         
-    binary = new int[len];
+    if(!binary)
+		binary = new int[len];
     //atom_positions = new int[len];
 
     //first one always start an atom

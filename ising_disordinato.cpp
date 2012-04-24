@@ -186,16 +186,11 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
         double r;
 		//probabilita di trovare un flip, ovvero -1
         //J gaussiano (positivo)
-        r = generatore.semi_norm();
-        //J uniforme [0.05,0.55] (positivo)
-		//r = generatore.rand()/2 + 0.05;
-        //J uniforme [0.5,1] (positivo)
-		//r = generatore.rand()/2 + 0.5;
-        //J uniforme [1.0,1.5] (positivo)
-		//r = generatore.rand()/2 + 1;
-		//r = generatore.rand() + 1.5;
+        //r = generatore.semi_norm();
         //J uniforme [0,1] (positivo)
 		//r = generatore.rand();
+        //J uniforme [0,0.5] (positivo)
+		r = generatore.rand()/2;
 		//J cost
 		//r=1;
 
@@ -224,6 +219,7 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
 
     delete []flipchain;
     delete []chain;
+	delete []prob;
     delete []J;
 }
 
@@ -252,7 +248,7 @@ int main(int argc, char** argv) {
 
     double media_globale = 0;
     double media_globale_n2 = 0;
-    int n_estrazioni = 50;
+    int n_estrazioni = 100;
     int runs = 0;
 
 
