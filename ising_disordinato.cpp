@@ -10,56 +10,22 @@
 #include <cstring>
 #include <omp.h>
 #include <ctime>
-//#include <vector>
+#include <vector>
 #include "strutture.h"
-//#include "rand55.h"
+#include "rand_mersenne.h"
+#include "distance.h"
+#include "adj_handler.h"
 
 extern options opts;
 double *mylog;
+
+adj_struct topologia;
 
 void print_array(const int *array, int len, const char *nome) {
     printf("%s {%d", nome, array[0]);
     for (int i = 1; i < len; i++)
         printf(",%d", array[i]);
     printf("}\n\n");
-}
-
-int *colore = 0;
-
-#define COL_MAX 1000
-
-template <typename T>
-void ppmout(const T *grid1, int sz, const char *filename) {
-
-    if (colore == 0) {
-        colore = new int[COL_MAX];
-        for (int i = 0; i < COL_MAX; i++) {
-            colore[i] = xrand();
-        }
-        colore[0] = 0x0F5A3A1F; // blue almost black
-    }
-
-    int MULT;
-    if (sz > 500)
-        MULT = 1;
-    else
-        MULT = 500 / sz + 1;
-
-
-    FILE *fout = fopen(filename, "w");
-    fprintf(fout, "P6\n %d %d\n 255\n", MULT*sz, MULT * sz);
-
-
-    for (int rg = 0; rg < sz; rg++) {
-        for (int i = 0; i < MULT; i++)
-            for (int cl = 0; cl < sz; cl++) {
-                int sito = (grid1[rg * sz + cl] + 20) % COL_MAX;
-                sito *= 2;
-                int color = colore[sito];
-                for (int j = 0; j < MULT; j++)
-                    fwrite(&color, 3, 1, fout);
-            }
-    }
 }
 
 
@@ -73,17 +39,17 @@ int *nnl = 0,
 #define left(i) (i+N-lato)%N
 #define right(i) (i+N+lato)%N
 
-void ising_lattice(options opts, rand55 &generatore, general_partition *partitions) {
+void ising_lattice(options opts, RandMT &generatore, general_partition *partitions) {
     int N = opts.seq_len;
     int lato = opts.lato;
     int runs = opts.n_seq;
     int i = 0;
-    double beta = opts.beta;
+    double beta = opts.beta[0];
     int dH;
     int metodo;
     double prob;
 
-    int *chain = new int[N];
+    vector<int> chain(N);
 
     //int entry_count=0;
 
@@ -102,10 +68,7 @@ void ising_lattice(options opts, rand55 &generatore, general_partition *partitio
             nnd[i] = down(i);
 
         }
-   }
-    
-
-
+    }
 
     if (beta < 0.4)
         prob = 0.5;
@@ -118,25 +81,19 @@ void ising_lattice(options opts, rand55 &generatore, general_partition *partitio
 
 
     for (int i = 0; i < N; i++) {
-        chain[i] = 2 * (generatore() > prob) - 1;
+        chain[i] = 2 * (generatore.get_double() > prob) - 1;
     }
     //print_array(chain,50,"chain");
 
     int flips = 2;
     if (beta < 0.36 || beta > 0.47)
         metodo = 1;
-    else{
+    else {
         metodo = 1;
-		flips=10;
-	}
-
-    /* METODO 1, funziona ok per beta<2, termalizza troppo lento dopo
-     * aggiornamento di un sito per volta preso a random 
-     */
-
+        flips = 10;
+    }
 
     for (i = -2; i < runs; i++) {
-
         /* METODO 1
          * single spin flip
          */
@@ -146,12 +103,12 @@ void ising_lattice(options opts, rand55 &generatore, general_partition *partitio
 
                 for (int j = 0; j < N; j += 2) {
                     dH = 2 * chain[j]*(chain[nnl[j]] + chain[nnr[j]] + chain[nnu[j]] + chain[nnd[j]]);
-                    if (dH < 0 || generatore() < exp(-beta * dH))
+                    if (dH < 0 || generatore.get_double() < exp(-beta * dH))
                         chain[j] = -chain[j];
                 }
                 for (int j = 1; j < N; j += 2) {
                     dH = 2 * chain[j]*(chain[nnl[j]] + chain[nnr[j]] + chain[nnu[j]] + chain[nnd[j]]);
-                    if (dH < 0 || generatore() < exp(-beta * dH))
+                    if (dH < 0 || generatore.get_double() < exp(-beta * dH))
                         chain[j] = -chain[j];
                 }
 
@@ -160,27 +117,21 @@ void ising_lattice(options opts, rand55 &generatore, general_partition *partitio
 
         if (i < 0)
             continue;
-        partitions[i].from_square_lattice(chain, lato, 2);
-
-
+        partitions[i].from_configuration(chain.data(), topologia);
     }
-
-
-    delete[]chain;
-
 }
 
 // J = normale(media=0,std=1)
 
-void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore) {
+void ising_entries_jnorm(options opts, int *buffer_sequenze, RandMT &generatore) {
     int L = opts.seq_len;
     int runs = opts.n_seq;
-    double beta = opts.beta;
+    double beta = opts.beta[0];
 
-    int *flipchain = new int [L];
-    int *chain = new int[L];
-    int *J = new int[L];
-    double *prob = new double[L];
+    vector<int> flipchain(L);
+    vector<int> chain(L);
+    vector<int> J(L);
+    vector<double> prob(L);
 
     for (int i = 0; i < L; i++) {
         double r;
@@ -190,7 +141,7 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
         //J uniforme [0,1] (positivo)
 		//r = generatore.rand();
         //J uniforme [0,0.5] (positivo)
-		r = generatore.rand()/2;
+		r = generatore.get_double()/2;
 		//J cost
 		//r=1;
 
@@ -204,10 +155,10 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
     }
 
     for (int i = 0; i < runs; i++) {
-        chain[0] = 2 * (generatore() > .5) - 1;
+        chain[0] = 2 * (generatore.get_double() > .5) - 1;
 
         for (int k = 0; k < L; k++)
-            flipchain[k] = (prob[k] > generatore()) ? -1 : 1;
+            flipchain[k] = (prob[k] > generatore.get_double()) ? -1 : 1;
 
         for (int k = 1; k < L; k++)
             chain[k] = flipchain[k] * chain[k - 1] * J[k];
@@ -217,29 +168,25 @@ void ising_entries_jnorm(options opts, int *buffer_sequenze, rand55 &generatore)
         }
     }
 
-    delete []flipchain;
-    delete []chain;
-	delete []prob;
-    delete []J;
 }
 
 int main(int argc, char** argv) {
 
 
-    FILE *out;
-
     set_program_options(opts, argc, argv);
-
-    //random number initialization
-    out = fopen("/dev/urandom", "r");
-    int bytes_read = fread(&opts.seed, sizeof (unsigned int), 1, out);
-    if (!bytes_read)
-        printf("Can't initialize random number generation\n");
-    fclose(out);
-    //fprintf(stderr,"Seed initialized to %d\n",opts.seed);
-    srand(opts.seed);
-    xrandinit(opts.seed);
-
+///Carica l'opportuna struttura di adiacenza, selezionata da linea di comando
+    if (opts.topologia == TORO_2D) 
+        topologia = adiacenza_toroidal_lattice(opts.lato);        
+    else if (opts.topologia == LINEARE){
+        opts.partition_type = LINEAR_PARTITION;
+        topologia = adiacenza_simple_line(opts.seq_len);
+    }
+    else {
+        printf("Not supported topology\n");
+        exit(1);
+    }
+    opts.seq_len = topologia.N;
+    
     //logarithm lookup table, 6x program speedup
     mylog = new double[3 * opts.seq_len + 10];
     for (int i = 1; i < 3 * opts.seq_len + 10; i++)
@@ -251,15 +198,15 @@ int main(int argc, char** argv) {
     int n_estrazioni = 100;
     int runs = 0;
 
-
+    
     // <editor-fold defaultstate="collapsed" desc="Sequenze monodimensionali">
-    if (opts.from & SEQUENCE)
+    if (opts.topologia == LINEARE)
 #pragma omp parallel
     {
         linear_partition *partitions = new linear_partition[opts.n_seq];
         int *buf_sequenze = new int[opts.n_seq * opts.seq_len];
         distance d(opts.seq_len);
-        rand55 generatore;
+        RandMT generatore;
 
         for (int L = 0; L < n_estrazioni; L++) {
             // Generazione di un nuovo vettore J_ij random
@@ -278,16 +225,9 @@ int main(int argc, char** argv) {
             //#pragma omp parallel for firstprivate(d) schedule(dynamic,10) reduction(+: media_n, media_n2)
             for (int i = 0; i < opts.n_seq; i++) {
                 for (int j = i + 1; j < opts.n_seq; j++) {
-#ifdef RIDUZIONE
-                    d.binary_partition(partitions[i], partitions[j]);
-                    media_locale += d.dist_s_r;
-                    media_locale_n2 += (d.dist_s_r)*(d.dist_s_r);
-#else
-                    d.binary_partition(partitions[i], partitions[j]);
-
-                    media_locale += d.dist_s;
-                    media_locale_n2 += (d.dist_s)*(d.dist_s);
-#endif
+                    d.dist(partitions[i], partitions[j]);
+                    media_locale += d.dist_shan_r;
+                    media_locale_n2 += (d.dist_shan_r)*(d.dist_shan_r);
                 }
             }
 #pragma omp critical
@@ -302,7 +242,7 @@ int main(int argc, char** argv) {
     }// </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="Reticoli bidimensionali">
-    if (opts.from & LATTICE) {
+    if (opts.topologia == TORO_2D) {
         std::clock_t start = std::clock();
         double time_diff;
         double completed_ratio;
@@ -310,7 +250,7 @@ int main(int argc, char** argv) {
         {
             general_partition *partitions = new general_partition[opts.n_seq];
             distance d(opts.seq_len);
-            rand55 generatore;
+            RandMT generatore;
 
 
             for (int L = 0; L < n_estrazioni; L++) {
@@ -326,9 +266,9 @@ int main(int argc, char** argv) {
                 //#pragma omp parallel for firstprivate(d) schedule(dynamic,10) reduction(+: media_n, media_n2)
                 for (int i = 0; i < opts.n_seq; i++) {
                     for (int j = i + 1; j < opts.n_seq; j++) {
-                        d.fill(partitions[i], partitions[j]);
-                        media_locale += d.dist_fuzzy;
-                        media_locale_n2 += (d.dist_fuzzy)*(d.dist_fuzzy);
+                        d(partitions[i], partitions[j]);
+                        media_locale += d.dist_shan;
+                        media_locale_n2 += (d.dist_shan)*(d.dist_shan);
                     }
                 }
 #pragma omp critical
@@ -370,7 +310,7 @@ int main(int argc, char** argv) {
 
     varianza_n = media_globale_n2 - media_globale*media_globale;
 	int lunghezza;
-	if(opts.from & LATTICE)
+	if(opts.topologia == TORO_2D)
 		lunghezza=opts.lato;
 	else
 		lunghezza=opts.seq_len;
