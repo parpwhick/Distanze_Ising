@@ -1,13 +1,13 @@
-#COPTS= -O3 -march=native 
+COPTS= -O3 -march=native 
 # debugging symbols
-COPTS+=-g2
+#COPTS+=-g2
 # debugging the STL library
 #COPTS+=-D_GLIBCXX_DEBUG
 # profiling
 #COPTS+= -pg
 # STL profiling
 #COPTS+= -D_GLIBCXX_PROFILE
-COPTS +=-Wall #-fopenmp
+COPTS +=-Wall -fopenmp
 COPTS +=-std=c++0x
 LINK_OPTS = -lm -lgomp
 files=*.cpp *.h Makefile Doxyfile

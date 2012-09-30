@@ -1,3 +1,5 @@
 electron_configurations
 nbproject
 ising
+*.o 
+*.bin

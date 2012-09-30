@@ -73,7 +73,6 @@ void print_help() {
             "  -microcanonical   Evolution according to microcanonical law [default]\n"
             "  -metropolis       Evolution according to Metropolis rule\n"
             "  -creutz           Evolution according to Creutz rule\n"
-            "  -link_energy N    Max of the microcanonical kinetic energy [10]\n"
             "  -beta B[,B2,..]   Floating point beta parameter for the (many) borders [0.45]\n"
             "  -sweeps N         Number of full sweeps in a time unit [1]\n"
             "  -skip N           Skip N time units to thermalize the system [50000]\n"
@@ -95,7 +94,6 @@ void set_program_options(options &opts, int argc, char**argv) {
         opts.topologia = LINEARE;
     opts.letto_da = RANDOM;
     opts.simulation_type = MICROCANONICAL;
-    opts.max_link_energy = 10;
     opts.skip = 50000;
     opts.sweeps = 1;
     opts.graphics = false;
@@ -106,6 +104,7 @@ void set_program_options(options &opts, int argc, char**argv) {
     opts.riduzione = DIRETTA;
     opts.threads = 2;
     opts.demo = false;
+    opts.ordered = true;
     opts.da_calcolare = 0
             | SHAN | TOP
             | RID | RID_TOP
@@ -157,7 +156,7 @@ void set_program_options(options &opts, int argc, char**argv) {
                 opts.seq_len = atoi(argv[read_argvs++]);
                 opts.topologia = LINEARE;
                 fprintf(stderr, "Analyzing 1d sequences long %d\n", opts.seq_len);
-            }  else if (input == "-epsilon") {
+            } else if (input == "-epsilon") {
                 if (argc - read_argvs < 1)
                     error("Need to specify epsilon\n");
                 if (argv[read_argvs][0] == '-')
@@ -232,14 +231,9 @@ void set_program_options(options &opts, int argc, char**argv) {
                 for(size_t i=0; i<opts.beta.size(); i++)
                     fprintf(stderr,"%.2f ",opts.beta[i]);
                 fprintf(stderr,"\n");
-            } else if (input == "-link_energy") {
-                if (argc - read_argvs < 1)
-                    error("Missing max link energy\n");
-                if (argv[read_argvs][0] == '-')
-                    error("Expecting argument, not another option\n");
-
-                opts.max_link_energy = atoi(argv[read_argvs++]);
-                fprintf(stderr, "Max link energy set to: %d\n", opts.max_link_energy);
+            } else if (input == "-disordered") {
+                fprintf(stderr, "Using disordered (random J_ij) Ising configurations\n");
+                opts.ordered = false;
             } else if (input == "-sweeps") {
                 if (argc - read_argvs < 1)
                     error("Missing number of sweeps\n");

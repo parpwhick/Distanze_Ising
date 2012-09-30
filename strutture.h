@@ -144,7 +144,7 @@ public:
     //bool translate;
     ///Mostrare la demo di operazioni tra partizioni
     bool demo;
-
+    bool ordered;
 } options;
 
 //start and load functions

@@ -18,6 +18,7 @@
 
 extern options opts;
 double *mylog;
+double *myexp;
 
 adj_struct topologia;
 
@@ -29,29 +30,35 @@ void print_array(const int *array, int len, const char *nome) {
 }
 
 
-int *nnl = 0,
-        *nnu = 0,
-        *nnd = 0,
-        *nnr = 0;
+int *nnl = 0, *nnu = 0, *nnd = 0, *nnr = 0;
 
-#define up(i) (i - (i % lato)+ ((i+lato-1)%lato))
-#define down(i) ((i/lato)*lato + ((i+lato+1)%lato))
-#define left(i) (i+N-lato)%N
-#define right(i) (i+N+lato)%N
+inline int up(int i, int lato, int N) {
+    return (i - (i % lato)+ ((i + lato - 1) % lato));
+}
+
+inline int down(int i, int lato, int N) {
+    return ((i / lato) * lato + ((i + lato + 1) % lato));
+}
+
+inline int left(int i, int lato, int N) {
+    return (i + N - lato) % N;
+}
+
+inline int right(int i, int lato, int N) {
+    return (i + N + lato) % N;
+}
 
 void ising_lattice(options opts, RandMT &generatore, general_partition *partitions) {
     int N = opts.seq_len;
     int lato = opts.lato;
     int runs = opts.n_seq;
-    int i = 0;
+    int iteration = 0;
     double beta = opts.beta[0];
     int dH;
-    int metodo;
     double prob;
+    int flips = 2;
 
     vector<int> chain(N);
-
-    //int entry_count=0;
 
     //inizializzazione array primi vicini
     if (nnl == 0)
@@ -62,66 +69,81 @@ void ising_lattice(options opts, RandMT &generatore, general_partition *partitio
         nnu = new int[N];
         nnd = new int[N];
         for (int i = 0; i < opts.seq_len; i++) {
-            nnl[i] = left(i);
-            nnr[i] = right(i);
-            nnu[i] = up(i);
-            nnd[i] = down(i);
+            nnl[i] = left(i,lato,N);
+            nnr[i] = right(i,lato,N);
+            nnu[i] = up(i,lato,N);
+            nnd[i] = down(i,lato,N);
 
         }
     }
 
-    if (beta < 0.4)
-        prob = 0.5;
-    else {
-        //genero in base al fit quadratico della probabilita da un esperimento
-        prob = log(beta);
-        prob = 2.14 - 5.63 * prob - 7.71 * prob*prob;
-        prob = exp(prob);
+    vector<int> J(2 * N);
+    if (opts.ordered) {
+        //ordered, J = 1 case, with phase transition
+        if (beta < 0.4)
+            prob = 0.5;
+        else {
+            //genero in base al fit quadratico della probabilita da un esperimento
+            prob = log(beta);
+            prob = 2.14 - 5.63 * prob - 7.71 * prob*prob;
+            prob = exp(prob);
+        }
+        for (int i = 0; i < N; i++)
+            chain[i] = 2 * (generatore.get_double() > prob) - 1;
+
+        J.assign(N,1);
+    } else {
+        //disordered case, with glass-spin transition at T=0, always kinda hot-temperature
+        //Random J_ij equally distributed at -1 and 1
+        for (int i = 0; i < 2 * N; i++)
+            J[i] = 2 * (generatore.get_int() % 2) - 1;
+        for (int i = 0; i < N; i++)
+            chain[i] = 2 * (generatore.get_int() % 2) - 1;
     }
 
+    if ((beta < 0.36 || beta > 0.47) && opts.ordered)
+        flips = 15;
+    else
+        flips = 30;
 
-    for (int i = 0; i < N; i++) {
-        chain[i] = 2 * (generatore.get_double() > prob) - 1;
-    }
-    //print_array(chain,50,"chain");
-
-    int flips = 2;
-    if (beta < 0.36 || beta > 0.47)
-        metodo = 1;
-    else {
-        metodo = 1;
-        flips = 10;
-    }
-
-    for (i = -2; i < runs; i++) {
-        /* METODO 1
-         * single spin flip
-         */
-        if (metodo == 1) {
-
-            for (int k = 0; k < flips; k++) {
-
-                for (int j = 0; j < N; j += 2) {
-                    dH = 2 * chain[j]*(chain[nnl[j]] + chain[nnr[j]] + chain[nnu[j]] + chain[nnd[j]]);
-                    if (dH < 0 || generatore.get_double() < exp(-beta * dH))
-                        chain[j] = -chain[j];
-                }
-                for (int j = 1; j < N; j += 2) {
-                    dH = 2 * chain[j]*(chain[nnl[j]] + chain[nnr[j]] + chain[nnu[j]] + chain[nnd[j]]);
-                    if (dH < 0 || generatore.get_double() < exp(-beta * dH))
-                        chain[j] = -chain[j];
-                }
-
+    for (iteration = -2; iteration < runs; iteration++) {
+        for (int k = 0; k < flips; k++) {
+            for (int s = 0; s < N; s += 2) {
+                dH = 0;
+                //the link DOWN for site s, is J[s]
+                dH += J[s] * chain[nnd[s]];
+                //the link RIGHT for site s, is J[s+N]
+                dH += J[s + N] * chain[nnr[s]];
+                //the link UP, is the link down of site nnu[s], that is J[nnu[s]]
+                dH += J[nnu[s]] * chain[nnu[s]];
+                //the link LEFT, is the link right of site nnl[s], i.e. J[nnl[s]+N]
+                dH += J[nnl[s] + N] * chain[nnl[s]];
+                dH *= 2 * chain[s];
+                if (dH <= 0 || generatore.get_double() < myexp[dH]) // exp(-beta * dH)
+                    chain[s] = -chain[s];
+            }
+            for (int s = 1; s < N; s += 2) {
+                dH = 0;
+                //the link DOWN for site s, is J[s]
+                dH += J[s] * chain[nnd[s]];
+                //the link RIGHT for site s, is J[s+N]
+                dH += J[s + N] * chain[nnr[s]];
+                //the link UP, is the link down of site nnu[s], that is J[nnu[s]]
+                dH += J[nnu[s]] * chain[nnu[s]];
+                //the link LEFT, is the link right of site nnl[s], i.e. J[nnl[s]+N]
+                dH += J[nnl[s] + N] * chain[nnl[s]];
+                dH *= 2 * chain[s];
+                if (dH <= 0 || generatore.get_double() < myexp[dH]) // exp(-beta * dH)
+                    chain[s] = -chain[s];
             }
         }
 
-        if (i < 0)
+        if (iteration < 0)
             continue;
-        partitions[i].from_configuration(chain.data(), topologia);
+        partitions[iteration].from_configuration(chain.data(), topologia);
+
     }
 }
-
-// J = normale(media=0,std=1)
 
 void ising_entries_jnorm(options opts, int *buffer_sequenze, RandMT &generatore) {
     int L = opts.seq_len;
@@ -192,9 +214,14 @@ int main(int argc, char** argv) {
     for (int i = 1; i < 3 * opts.seq_len + 10; i++)
         mylog[i] = log(i);
     mylog[0] = 0;
+    myexp = new double[100];
+    for (int i = 0; i < 100; i++)
+        myexp[i] = exp(- opts.beta[0] * i);
 
     double media_globale = 0;
     double media_globale_n2 = 0;
+    double media_rid_globale = 0;
+    double media_rid_globale_n2 = 0;
     int n_estrazioni = 100;
     int runs = 0;
 
@@ -214,6 +241,8 @@ int main(int argc, char** argv) {
 
             double media_locale = 0;
             double media_locale_n2 = 0;
+            double media_rid_locale = 0;
+            double media_rid_locale_n2 = 0;
             ising_entries_jnorm(opts, buf_sequenze, generatore);
 
             //riempi le partizioni, a partire dalle sequenze date
@@ -226,14 +255,18 @@ int main(int argc, char** argv) {
             for (int i = 0; i < opts.n_seq; i++) {
                 for (int j = i + 1; j < opts.n_seq; j++) {
                     d.dist(partitions[i], partitions[j]);
-                    media_locale += d.dist_shan_r;
-                    media_locale_n2 += (d.dist_shan_r)*(d.dist_shan_r);
+                    media_locale += d.dist_shan;
+                    media_rid_locale += d.dist_shan_r;
+                    media_locale_n2 += (d.dist_shan)*(d.dist_shan);
+                    media_rid_locale_n2 += (d.dist_shan_r)*(d.dist_shan_r);
                 }
             }
 #pragma omp critical
             {
                 media_globale += media_locale;
                 media_globale_n2 += media_locale_n2;
+                media_rid_globale += media_rid_locale;
+                media_rid_globale_n2 += media_rid_locale_n2;
                 runs += 1;
             }
 
@@ -258,7 +291,9 @@ int main(int argc, char** argv) {
                 // e di opts.n_seq sequenze che hanno quel J 
 
                 double media_locale = 0;
-                double media_locale_n2 = 0;
+            double media_locale_n2 = 0;
+            double media_rid_locale = 0;
+            double media_rid_locale_n2 = 0;
 
                 ising_lattice(opts, generatore, partitions);
 
@@ -267,14 +302,18 @@ int main(int argc, char** argv) {
                 for (int i = 0; i < opts.n_seq; i++) {
                     for (int j = i + 1; j < opts.n_seq; j++) {
                         d(partitions[i], partitions[j]);
-                        media_locale += d.dist_shan;
-                        media_locale_n2 += (d.dist_shan)*(d.dist_shan);
+                         media_locale += d.dist_shan;
+                    media_rid_locale += d.dist_shan_r;
+                    media_locale_n2 += (d.dist_shan)*(d.dist_shan);
+                    media_rid_locale_n2 += (d.dist_shan_r)*(d.dist_shan_r);
                     }
                 }
 #pragma omp critical
                 {
-                    media_globale += media_locale;
-                    media_globale_n2 += media_locale_n2;
+                   media_globale += media_locale;
+                media_globale_n2 += media_locale_n2;
+                media_rid_globale += media_rid_locale;
+                media_rid_globale_n2 += media_rid_locale_n2;
                     runs += 1;
                 }
 
@@ -303,18 +342,21 @@ int main(int argc, char** argv) {
     }// </editor-fold>
 
 
-    double varianza_n;
+    double varianza_n, varianza_r;
     int Nd = runs * (opts.n_seq * (opts.n_seq - 1)) / 2;
     media_globale /= Nd;
     media_globale_n2 /= Nd;
+    media_rid_globale /= Nd;
+    media_rid_globale_n2 /= Nd;
 
     varianza_n = media_globale_n2 - media_globale*media_globale;
+    varianza_r = media_rid_globale_n2 - media_rid_globale*media_rid_globale;
 	int lunghezza;
 	if(opts.topologia == TORO_2D)
 		lunghezza=opts.lato;
 	else
 		lunghezza=opts.seq_len;
-    printf("%d %f %f\n", lunghezza, media_globale, varianza_n);
+    printf("%d %f %f %f %f\n", lunghezza, media_globale, varianza_n, media_rid_globale, varianza_r);
     //fprintf(stderr, "%d %f %f\n", opts.seq_len, media_globale, varianza_n);
 
 
